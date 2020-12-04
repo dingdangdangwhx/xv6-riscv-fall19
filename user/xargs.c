@@ -5,7 +5,7 @@ int main(int argc, char *argv[]){
     int i;
     int j = 0;
     int k;
-    int l,m = 0;
+    int l,m = 0;        
     char block[32];
     char buf[32];
     char *p = buf;
@@ -13,7 +13,7 @@ int main(int argc, char *argv[]){
     for(i = 1; i < argc; i++){
         lineSplit[j++] = argv[i];
     }
-    while( (k = read(0, block, sizeof(block))) > 0){
+    while( (k = read(0, block, sizeof(block))) > 0){  //读下一行输入进去
         for(l = 0; l < k; l++){
             if(block[l] == '\n'){
                 buf[m] = 0;

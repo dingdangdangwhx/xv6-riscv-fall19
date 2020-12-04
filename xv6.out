@@ -1,0 +1,21 @@
+qemu-system-riscv64: warning: No -bios option specified. Not loading a firmware.
+qemu-system-riscv64: warning: This default will change in a future QEMU release. Please use the -bios option to avoid breakages when this happens.
+qemu-system-riscv64: warning: See QEMU's deprecation documentation for details.
+
+xv6 kernel is booting
+
+virtio disk init 0
+hart 2 starting
+hart 1 starting
+init: starting sh
+$ mkdir bKCxU21K
+$ echo > bKCxU21K/q5AQSVB4
+$ mkdir bKCxU21K/hJnwDh9e
+$ echo > bKCxU21K/hJnwDh9e/q5AQSVB4
+$ mkdir dm9tVxcF
+$ echo > dm9tVxcF/q5AQSVB4
+$ find . q5AQSVB4
+./bKCxU21K/q5AQSVB4
+./bKCxU21K/hJnwDh9e/q5AQSVB4
+./dm9tVxcF/q5AQSVB4
+$ qemu-system-riscv64: terminating on signal 15 from pid 9110 (make)
