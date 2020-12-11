@@ -27,7 +27,7 @@
  
 struct {
   // 每个bucket一个lock
-  // hashbucket.next是当前bucket的MRU
+  // hashbucket.next是当前bucket的MRU(Maximum-Transfer-Unit)
   struct spinlock lock[NBUCKETS];
   struct buf buf[NBUF];
   struct buf hashbucket[NBUCKETS];

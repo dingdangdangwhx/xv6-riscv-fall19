@@ -27,7 +27,7 @@ struct {
 void
 kinit()
 {
-  for(int i = 0; i < NCPU; i++)
+  for(int i = 0; i < NCPU; i++)//维护每个CPU的表
     initlock(&kmem[i].lock, "kmem");
   freerange(end, (void*)PHYSTOP);
 }
@@ -60,7 +60,7 @@ kfree(void *pa)
 
   push_off();
   int cpu = cpuid();
-  acquire(&kmem[cpu].lock);
+  acquire(&kmem[cpu].lock);//维护每个CPU的锁
   r->next = kmem[cpu].freelist;
   kmem[cpu].freelist = r;
   release(&kmem[cpu].lock);
@@ -85,7 +85,7 @@ kalloc(void)
   release(&kmem[cpu].lock);
   pop_off();
   
-  if(!r) {
+  if(!r) {//steal其他freelist
     for(int i = 0; i < NCPU; i++)
       acquire(&kmem[i].lock);
 
