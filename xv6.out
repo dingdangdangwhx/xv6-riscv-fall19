@@ -5,8 +5,8 @@ bd: memory sz is 134049792 bytes; allocate an size array of length 24
 bd: 2097936 meta bytes for managing 134217728 bytes of memory
 bd: 0x29000 bytes unavailable
 virtio disk init 0
-hart 2 starting
 hart 1 starting
+hart 2 starting
 init: starting sh
 $ usertests
 usertests starting
@@ -173,4 +173,4 @@ bigdir test
 bigdir ok
 exec test
 ALL TESTS PASSED
-$ qemu-system-riscv64: terminating on signal 15 from pid 5002 (make)
+$ qemu-system-riscv64: terminating on signal 15 from pid 9018 (make)
