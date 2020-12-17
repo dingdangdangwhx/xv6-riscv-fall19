@@ -66,7 +66,8 @@ void bit_toggle(char *array,int index){
 
 // return 1 if the bit at position index in array is 1
 // which indicates one is free , the other is allocated
-int bit_get(char *array,int index){
+int bit_get(char *array,int index)
+{
   index/=2;
   char b = array[index/8];
   char m = (1 << (index % 8));
@@ -122,7 +123,7 @@ firstk(uint64 n) {
   return k;
 }
 
-// Compute the block index for address p at size k
+// Compute the block index for address p at size k，计算是该层的第几个节点
 int
 blk_index(int k, char *p) {
   int n = p - (char *) bd_base;
@@ -157,14 +158,14 @@ bd_malloc(uint64 nbytes)
   // Found a block; pop it and potentially split it.
   char *p = lst_pop(&bd_sizes[k].free);
   // bit_set(bd_sizes[k].alloc, blk_index(k, p));
-  bit_toggle(bd_sizes[k].alloc, blk_index(k, p));
+  bit_toggle(bd_sizes[k].alloc, blk_index(k, p));//alloc一位bit翻转
   for(; k > fk; k--) {
     // split a block at size k and mark one half allocated at size k-1
     // and put the buddy on the free list at size k-1
     char *q = p + BLK_SIZE(k-1);   // p's buddy
     bit_set(bd_sizes[k].split, blk_index(k, p));
     // bit_set(bd_sizes[k-1].alloc, blk_index(k-1, p));
-    bit_toggle(bd_sizes[k-1].alloc, blk_index(k-1, p));
+    bit_toggle(bd_sizes[k-1].alloc, blk_index(k-1, p));//alloc一位bit翻转
     lst_push(&bd_sizes[k-1].free, q);
   }
   release(&lock);
@@ -195,14 +196,14 @@ bd_free(void *p) {
     int bi = blk_index(k, p);
     int buddy = (bi % 2 == 0) ? bi+1 : bi-1;
     // bit_clear(bd_sizes[k].alloc, bi);  // free p at size k
-    bit_toggle(bd_sizes[k].alloc, bi);  // free p at size k
+    bit_toggle(bd_sizes[k].alloc, bi);  // free p at size k，alloc一位bit翻转
     // if (bit_isset(bd_sizes[k].alloc, buddy)) {  // is buddy allocated?
     if (bit_get(bd_sizes[k].alloc, bi)) {  // is buddy allocated?
       break;   // break out of loop               // as bi is already free,so if xor bit is 1,then buddy is allocated
     }
     // budy is free; merge with buddy
     q = addr(k, buddy);
-    lst_remove(q);    // remove buddy from free list
+    lst_remove(q);    // remove buddy from free list,对齐
     if(buddy % 2 == 0) {
       p = q;
     }
@@ -347,7 +348,7 @@ bd_init(void *base, void *end) {
   // initialize free list and allocate the alloc array for each size k
   for (int k = 0; k < nsizes; k++) {
     lst_init(&bd_sizes[k].free);
-    sz = sizeof(char)* ROUNDUP(NBLK(k), 16)/16;
+    sz = sizeof(char)* ROUNDUP(NBLK(k), 16)/16;//优化空间
     bd_sizes[k].alloc = p;
     memset(bd_sizes[k].alloc, 0, sz);
     p += sz;
