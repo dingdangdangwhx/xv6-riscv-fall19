@@ -43,7 +43,8 @@ void
 binit(void)
 {
   struct buf *b;
-  for(int i=0;i<NBUCKETS;i++){
+  for(int i=0;i<NBUCKETS;i++)
+  {
     initlock(&bcache.lock[i], "bcache.bucket");
     // 仍然将每个bucket的头节点都指向自己
     b=&bcache.hashbucket[i];
@@ -74,8 +75,10 @@ bget(uint dev, uint blockno)
   acquire(&bcache.lock[h]);
  
   // 首先在blockno对应的bucket中找，refcnt可能为0，也可能不为0
-  for(b = bcache.hashbucket[h].next; b != &bcache.hashbucket[h]; b = b->next){
-    if(b->dev == dev && b->blockno == blockno){
+  for(b = bcache.hashbucket[h].next; b != &bcache.hashbucket[h]; b = b->next)
+  {
+    if(b->dev == dev && b->blockno == blockno)
+    {
       b->refcnt++;
       release(&bcache.lock[h]);
       acquiresleep(&b->lock);
@@ -101,7 +104,7 @@ bget(uint dev, uint blockno)
         b->prev->next=b->next;
         release(&bcache.lock[nh]);
         // 插入到blockno对应的bucket中去
-        // 👇就是有头节点的头插法
+        // 就是有头节点的头插法
         b->next=bcache.hashbucket[h].next;
         b->prev=&bcache.hashbucket[h];
         bcache.hashbucket[h].next->prev=b;

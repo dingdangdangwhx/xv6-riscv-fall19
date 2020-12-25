@@ -22,7 +22,7 @@ struct run {
 struct {
   struct spinlock lock;
   struct run *freelist;
-} kmem[NCPU];
+} kmem[NCPU];//每个CPU维护一个空闲链表
 
 void
 kinit()
