@@ -5,8 +5,6 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
-#include "spinlock.h"
-#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -179,37 +177,42 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 // Remove mappings from a page table. The mappings in
 // the given range must exist. Optionally free the
 // physical memory.
-void
-uvmunmap(pagetable_t pagetable, uint64 va, uint64 size, int do_free)
+// ref. hint5:uvmunmap() will panic; modify it to not panic if some pages aren't mapped.
+void uvmunmap(pagetable_t pagetable, uint64 va, uint64 size, int do_free)
 {
-  uint64 a, last;
-  pte_t *pte;
-  uint64 pa;
+    uint64 a, last;
+    pte_t *pte;
+    uint64 pa;
 
-  a = PGROUNDDOWN(va);
-  last = PGROUNDDOWN(va + size - 1);
-  for(;;){
-    if((pte = walk(pagetable, a, 0)) == 0){
-      // panic("uvmunmap: walk");
-      goto end;
+    a = PGROUNDDOWN(va);
+    last = PGROUNDDOWN(va + size - 1);
+    for (;;)
+    {
+        if ((pte = walk(pagetable, a, 0)) == 0)  //walk定义在上方
+        {
+            //panic("uvmunmap: walk");
+            goto CONTINUE;    //这里必须修改为goto，目的是让后两个if也可以进行a += PGSIZE;同时这也解决了panic:kfree的问题
+        }
+        if ((*pte & PTE_V) == 0)
+        {
+            //printf("va=%p pte=%p\n", a, *pte);
+            //panic("uvmunmap: not mapped");
+            goto CONTINUE;
+        }
+        if (PTE_FLAGS(*pte) == PTE_V)
+            panic("uvmunmap: not a leaf"); //不是叶子页表项
+        if (do_free)
+        {
+            pa = PTE2PA(*pte);
+            kfree((void *)pa);
+        }
+        *pte = 0;
+    CONTINUE:
+        if (a == last)
+            break;
+        a += PGSIZE;
+        pa += PGSIZE;
     }
-    if((*pte & PTE_V) == 0){
-      // printf("va=%p pte=%p\n", a, *pte);
-      // panic("uvmunmap: not mapped");
-    }
-    if(PTE_FLAGS(*pte) == PTE_V)
-      panic("uvmunmap: not a leaf");
-    if(do_free && ((*pte & PTE_V) != 0)){
-      pa = PTE2PA(*pte);
-      kfree((void*)pa);
-    }
-    *pte = 0;
-    end:
-    if(a == last)
-      break;
-    a += PGSIZE;
-    pa += PGSIZE;
-  }
 }
 
 // create an empty user page table.
@@ -321,37 +324,41 @@ uvmfree(pagetable_t pagetable, uint64 sz)
 // physical memory.
 // returns 0 on success, -1 on failure.
 // frees any allocated pages on failure.
-int
-uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
+int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 {
-  pte_t *pte;
-  uint64 pa, i;
-  uint flags;
-  char *mem;
+    pte_t *pte;
+    uint64 pa, i;
+    uint flags;
+    char *mem;
 
-  for(i = 0; i < sz; i += PGSIZE){
-    if((pte = walk(old, i, 0)) == 0)
-      // panic("uvmcopy: pte should exist");
-      continue;
-    if((*pte & PTE_V) == 0)
-      // panic("uvmcopy: page not present");
-      continue;
-    pa = PTE2PA(*pte);
-    flags = PTE_FLAGS(*pte);
-    if((mem = kalloc()) == 0)
-      goto err;
-    memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
-      kfree(mem);
-      goto err;
+    for (i = 0; i < sz; i += PGSIZE)
+    {
+        if ((pte = walk(old, i, 0)) == 0)  //walk定义在上面，在页表old中返回与虚拟地址i对应的PTE地址。如果alloc=0，不创建任何必需的页表页。
+            //panic("uvmcopy: pte should exist");
+            continue;  //如果当前没有返回对应的物理地址，则判断下一项
+            //break;  //otherwise the kill and wait failed?
+        if ((*pte & PTE_V) == 0)
+            //panic("uvmcopy: page not present");
+            continue;  //如果当前页表项无效(不在内存中)，PTE_V=0，则判断下一项
+            //break;
+        pa = PTE2PA(*pte); //找到旧页表项的物理地址
+        flags = PTE_FLAGS(*pte);
+        if ((mem = kalloc()) == 0)  //分配页面失败
+            goto err;
+        memmove(mem, (char *)pa, PGSIZE);  //将就页表项复制到mem中
+        if (mappages(new, i, PGSIZE, (uint64)mem, flags) != 0)  //如果建立页表逻辑地址与物理地址映射失败
+        {
+            kfree(mem);
+            goto err;
+        }
     }
-  }
-  return 0;
+    return 0;
 
- err:
-  uvmunmap(new, 0, i, 1);
-  return -1;
+err:
+    uvmunmap(new, 0, i, 1);
+    return -1;
 }
+
 
 // mark a PTE invalid for user access.
 // used by exec for the user stack guard page.
@@ -366,39 +373,6 @@ uvmclear(pagetable_t pagetable, uint64 va)
   *pte &= ~PTE_U;
 }
 
-
-int 
-fill_user_addr(uint64 addr, int len){
-  uint64 va0, va1;
-
-  if(len < 0) return -1;
-  struct proc *p = myproc();
-
-  va0 = PGROUNDDOWN(addr);
-  va1 = PGROUNDUP(addr + len);
-
-  while(va0 < va1) {
-    if(walkaddr(p->pagetable, va0) == 0) {
-      if (va0 >= p->sz || va0 < PGROUNDDOWN(p->tf->sp)){
-        va0 += PGSIZE;
-        continue;
-      }
-      char *mem = kalloc();
-      if(mem == 0){
-        return -1;
-      }
-      memset(mem, 0, PGSIZE);
-      if(mappages(p->pagetable, va0, PGSIZE, (uint64)mem, PTE_W|PTE_X|PTE_R|PTE_U) != 0){
-        kfree(mem);
-        return -1;
-      }
-
-    }
-    va0 += PGSIZE;
-  }
-  return 0;
-}
-
 // Copy from kernel to user.
 // Copy len bytes from src to virtual address dstva in a given page table.
 // Return 0 on success, -1 on error.
@@ -406,9 +380,6 @@ int
 copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 {
   uint64 n, va0, pa0;
-
-  if(fill_user_addr(dstva, len) != 0)
-    return -1;
 
   while(len > 0){
     va0 = PGROUNDDOWN(dstva);
@@ -434,9 +405,6 @@ int
 copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 {
   uint64 n, va0, pa0;
-
-  if(fill_user_addr(srcva, len) != 0)
-    return -1;
 
   while(len > 0){
     va0 = PGROUNDDOWN(srcva);
@@ -464,9 +432,6 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 {
   uint64 n, va0, pa0;
   int got_null = 0;
-
-  // if(fill_user_addr(srcva, max) != 0)
-  //   return -1;
 
   while(got_null == 0 && max > 0){
     va0 = PGROUNDDOWN(srcva);
@@ -501,32 +466,35 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   }
 }
 
-void 
-_vmprint(pagetable_t pagetable, int idx) {
-  char *fmt;
-  if(idx == 1){
-    fmt = " ..%d: pte %p pa %p\n";
-  }else if(idx == 2) {
-    fmt = " .. ..%d: pte %p pa %p\n";
-  }else if(idx == 3){
-    fmt = " .. .. ..%d: pte %p pa %p\n";
-  }else{
-    return;
-  }
 
-  for(int i = 0; i < 512; i++){
-    pte_t pte = pagetable[i];
-    if((pte & PTE_V) != 0){
-      uint64 child = PTE2PA(pte);
-      printf(fmt, i, pte, child);
-      _vmprint((pagetable_t)child, idx + 1);
+
+
+void print_page_table(pagetable_t pagetable, int depth)
+{
+  // there are 2^9 = 512 PTEs in a page table. //参考freewalk
+  for (int i = 0; i < 512; i++)
+  {
+    pte_t pte = pagetable[i]; //获取当前level页表的第i项，pte为虚拟地址
+
+    if (pte & PTE_V) //如果该页表项有效，否则跳过
+    {
+      for (int j = 0; j < depth; j++) //递归打印页表，每个深度打印..
+        printf(" ..");
+      printf("%d: pte %p pa %p\n", i, pte, PTE2PA(pte)); //PTE2PA定义在riscv.h中，将页号对应的页表项转化为对应的物理地址
+    }
+
+    //如果该页有效，并且PTE_R、PTE_W和PTE_X均为0，说明该页表项指向一个页表(下一级页表)
+    if ((pte & PTE_V) && (pte & (PTE_R | PTE_W | PTE_X)) == 0)
+    {
+      // this PTE points to a lower-level page table.
+      uint64 child_table = PTE2PA(pte);                      //取得该页表的物理首地址
+      print_page_table((pagetable_t)child_table, depth + 1); //递归调用函数，传入子页表的地址，深度+1
     }
   }
-
 }
 
-void 
-vmprint(pagetable_t pagetable) {
-  printf("page table %p\n", pagetable);
-  _vmprint(pagetable, 1);
+void vmprint(pagetable_t top_level) //pagetable_t 指向页表的指针类型
+{
+  printf("page table %p\n", top_level);
+  print_page_table(top_level, 1);  //打印最顶层table，初始深度为1
 }

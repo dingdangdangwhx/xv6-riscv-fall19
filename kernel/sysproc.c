@@ -38,30 +38,24 @@ sys_wait(void)
   return wait(p);
 }
 
+
 uint64
 sys_sbrk(void)
 {
-  int addr;
-  int newaddr;
+  uint64 addr;
   int n;
-
-  if(argint(0, &n) < 0){
-    printf("vf tm ii ui le");
+  struct proc *p = myproc();
+  if(argint(0, &n) < 0)
     return -1;
-  }
-  addr = myproc()->sz;
+  addr = p->sz;  //获得旧的大小
+  if(addr + n > MAXVA)
+    return -1;
   // if(growproc(n) < 0)
   //   return -1;
-
-  newaddr = PGROUNDUP(addr + n);
-  // kill the shit in kernel
-  if(newaddr < PGSIZE || newaddr >= MAXVA)
-    exit(-1);
-  // instantly free mem
-  if(newaddr < addr){
-    uvmdealloc(myproc()->pagetable, addr, newaddr);
+  if(n < 0){  //sbrk()输入参数为负数时，进程归还大小为n的线性地址空间。通过uvmdealloc释放。
+    uvmdealloc(p->pagetable, addr, addr + n);  
   }
-  myproc()->sz = newaddr;
+  p->sz = addr + n;  //进程大小增加n
   return addr;
 }
 

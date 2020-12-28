@@ -2,14 +2,59 @@
 xv6 kernel is booting
 
 virtio disk init 0
-hart 2 starting
 hart 1 starting
+hart 2 starting
+page table 0x0000000087f6e000
+ ..0: pte 0x0000000021fda801 pa 0x0000000087f6a000
+ .. ..0: pte 0x0000000021fda401 pa 0x0000000087f69000
+ .. .. ..0: pte 0x0000000021fdac1f pa 0x0000000087f6b000
+ .. .. ..1: pte 0x0000000021fda00f pa 0x0000000087f68000
+ .. .. ..2: pte 0x0000000021fd9c1f pa 0x0000000087f67000
+ ..255: pte 0x0000000021fdb401 pa 0x0000000087f6d000
+ .. ..511: pte 0x0000000021fdb001 pa 0x0000000087f6c000
+ .. .. ..510: pte 0x0000000021fdd807 pa 0x0000000087f76000
+ .. .. ..511: pte 0x000000002000200b pa 0x0000000080008000
 init: starting sh
+page table 0x0000000087f63000
+ ..0: pte 0x0000000021fd7c01 pa 0x0000000087f5f000
+ .. ..0: pte 0x0000000021fd7801 pa 0x0000000087f5e000
+ .. .. ..0: pte 0x0000000021fd801f pa 0x0000000087f60000
+ .. .. ..1: pte 0x0000000021fd741f pa 0x0000000087f5d000
+ .. .. ..2: pte 0x0000000021fd700f pa 0x0000000087f5c000
+ .. .. ..3: pte 0x0000000021fd6c1f pa 0x0000000087f5b000
+ ..255: pte 0x0000000021fd8801 pa 0x0000000087f62000
+ .. ..511: pte 0x0000000021fd8401 pa 0x0000000087f61000
+ .. .. ..510: pte 0x0000000021fdbc07 pa 0x0000000087f6f000
+ .. .. ..511: pte 0x000000002000200b pa 0x0000000080008000
 $ usertests
+page table 0x0000000087f56000
+ ..0: pte 0x0000000021fd4801 pa 0x0000000087f52000
+ .. ..0: pte 0x0000000021fd4401 pa 0x0000000087f51000
+ .. .. ..0: pte 0x0000000021fd4c1f pa 0x0000000087f53000
+ .. .. ..1: pte 0x0000000021fd401f pa 0x0000000087f50000
+ .. .. ..2: pte 0x0000000021fd3c1f pa 0x0000000087f4f000
+ .. .. ..3: pte 0x0000000021fd381f pa 0x0000000087f4e000
+ .. .. ..4: pte 0x0000000021fd341f pa 0x0000000087f4d000
+ .. .. ..5: pte 0x0000000021fd301f pa 0x0000000087f4c000
+ .. .. ..6: pte 0x0000000021fd2c1f pa 0x0000000087f4b000
+ .. .. ..7: pte 0x0000000021fd281f pa 0x0000000087f4a000
+ .. .. ..8: pte 0x0000000021fd241f pa 0x0000000087f49000
+ .. .. ..9: pte 0x0000000021fd201f pa 0x0000000087f48000
+ .. .. ..10: pte 0x0000000021fd1c1f pa 0x0000000087f47000
+ .. .. ..11: pte 0x0000000021fd181f pa 0x0000000087f46000
+ .. .. ..12: pte 0x0000000021fd141f pa 0x0000000087f45000
+ .. .. ..13: pte 0x0000000021fd100f pa 0x0000000087f44000
+ .. .. ..14: pte 0x0000000021fd0c1f pa 0x0000000087f43000
+ ..255: pte 0x0000000021fd5401 pa 0x0000000087f55000
+ .. ..511: pte 0x0000000021fd5001 pa 0x0000000087f54000
+ .. .. ..510: pte 0x0000000021fd9007 pa 0x0000000087f64000
+ .. .. ..511: pte 0x000000002000200b pa 0x0000000080008000
 usertests starting
 test reparent2: OK
 test pgbug: OK
-test sbrkbugs: usertrap(): unexpected scause 0x000000000000000c pid=3208
+test sbrkbugs: usertrap(): unexpected scause 0x000000000000000c pid=3207
+            sepc=0x0000000000004430 stval=0x0000000000004430
+usertrap(): unexpected scause 0x000000000000000c pid=3208
             sepc=0x0000000000004430 stval=0x0000000000004430
 OK
 test badarg: OK
@@ -26,16 +71,68 @@ test concreate: OK
 test subdir: OK
 test fourfiles: OK
 test sharedfd: OK
-test exectest: OK
+test exectest: page table 0x0000000087a73000
+ ..0: pte 0x0000000021ea0401 pa 0x0000000087a81000
+ .. ..0: pte 0x0000000021e9d401 pa 0x0000000087a75000
+ .. .. ..0: pte 0x0000000021ea181f pa 0x0000000087a86000
+ .. .. ..1: pte 0x0000000021e9d80f pa 0x0000000087a76000
+ .. .. ..2: pte 0x0000000021e9dc1f pa 0x0000000087a77000
+ ..255: pte 0x0000000021ea1c01 pa 0x0000000087a87000
+ .. ..511: pte 0x0000000021ea0c01 pa 0x0000000087a83000
+ .. .. ..510: pte 0x0000000021e96007 pa 0x0000000087a58000
+ .. .. ..511: pte 0x000000002000200b pa 0x0000000080008000
+OK
 test bigargtest: OK
 test bigwrite: OK
 test bsstest: OK
 test sbrkmuch: OK
-test kernmem: OK
-test sbrkfail: OK
+test kernmem: usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+usertrap(): 访问超出了线性地址的有效范围
+OK
+test sbrkfail: usertrap():内存空间分配失败
+OK
 test sbrkarg: OK
 test validatetest: OK
-test stacktest: OK
+test stacktest: usertrap(): 非法访问保护区，访问地址小于栈顶
+OK
 test opentest: OK
 test writetest: OK
 test writebig: OK
@@ -52,4 +149,6 @@ test bigfile: OK
 test dirfile: OK
 test iref: OK
 test forktest: OK
-test bigdir: qemu-system-riscv64: terminating on signal 2
+test bigdir: OK
+ALL TESTS PASSED
+$ qemu-system-riscv64: terminating on signal 15 from pid 14896 (make)
